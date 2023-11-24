@@ -8,6 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 
 import com.projects.productscatalog.entities.Product;
+import com.projects.productscatalog.services.exceptions.ResourceNotFoundException;
 
 @DataJpaTest
 public class ProductRepositoryTests {
@@ -30,6 +31,19 @@ public class ProductRepositoryTests {
 
 		// Verifica se o Optional está vazio, indicando que o objeto não foi encontrado
 		Assertions.assertFalse(result.isPresent());
+	}
+
+	@Test
+	public void shouldReturnFalseWhenCheckingExistenceOfNonExistentId() {
+	    // Arrange
+	    long nonExistentId = 1000L;
+	    boolean expectedIdExists = false;
+
+	    // Act
+	    boolean actualIdExists = repository.existsById(nonExistentId);
+
+	    // Assert
+	    Assertions.assertEquals(expectedIdExists, actualIdExists);
 	}
 
 }

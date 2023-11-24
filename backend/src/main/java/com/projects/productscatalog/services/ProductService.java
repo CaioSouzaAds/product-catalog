@@ -25,7 +25,7 @@ public class ProductService {
 
 	@Autowired
 	private ProductRepository repository;
-	
+
 	@Autowired
 	private CategoryRepository categoryRepository;
 
@@ -67,15 +67,21 @@ public class ProductService {
 
 	@Transactional
 	public void delete(Long id) {
-		if (!repository.existsById(id)) {
+		
+		if (repository.existsById(id)) {
+			try {
+				repository.deleteById(id);
+
+			} catch (DataIntegrityViolationException e) {
+				// Capturando exceção relacionada à violação de integridade
+				throw new DataBaseException("Integrity violation");
+			}
+		}else {
 			throw new ResourceNotFoundException("Id not found " + id);
 		}
-
-		try {
-			repository.deleteById(id);
-		} catch (DataIntegrityViolationException e) {
-			throw new DataBaseException("Integrity violation");
-		}
+			
+		
+		
 	}
 
 	private void copyDtoToEntity(ProductDTO dto, Product entity) {
@@ -84,7 +90,7 @@ public class ProductService {
 		entity.setPrice(dto.getPrice());
 		entity.setImgUrl(dto.getImgUrl());
 		entity.setDate(dto.getDate());
-		
+
 		entity.getCategories().clear();
 		for (CategoryDTO catDto : dto.getCategories()) {
 			Category category = categoryRepository.getReferenceById(catDto.getId());
