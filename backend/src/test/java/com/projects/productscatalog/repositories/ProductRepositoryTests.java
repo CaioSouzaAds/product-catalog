@@ -27,39 +27,36 @@ public class ProductRepositoryTests {
 		nonExistentId = 1000L;
 		countTotalProducts = 25L;
 	}
-	
+
 	@Test
 	public void saveShouldPersistWithAutoincrementWhenIdIsNull() {
-		
+		// Arrange
 		Product product = Factory.createdProduct();
 		product.setId(null);
-		
+
+		// Act
 		product = repository.save(product);
-		
+
+		// Assert
 		Assertions.assertNotNull(product.getId());
 		Assertions.assertEquals(countTotalProducts + 1, product.getId());
 	}
 
 	@Test
 	public void deleteShouldDeleteObjectWhenIdExists() {
-		// Arrange: Configuração do teste
+		// Arrange
 
-		// Act: Ação a ser testada
-		// Exclui o objeto com o ID existente usando o método deleteById do repositório
+		// Act
 		repository.deleteById(existingId);
 
-		// Assert: Verificação do resultado
-		// Tenta encontrar o objeto após a exclusão
+		// Assert
 		Optional<Product> result = repository.findById(existingId);
-
-		// Verifica se o Optional está vazio, indicando que o objeto não foi encontrado
 		Assertions.assertFalse(result.isPresent());
 	}
 
 	@Test
 	public void shouldReturnFalseWhenCheckingExistenceOfNonExistentId() {
 		// Arrange
-
 		boolean expectedIdExists = false;
 
 		// Act
@@ -67,5 +64,27 @@ public class ProductRepositoryTests {
 
 		// Assert
 		Assertions.assertEquals(expectedIdExists, actualIdExists);
+	}
+
+	@Test
+	public void findByIdShouldReturnNonEmptyOptionalWhenIdExists() {
+		// Arrange
+
+		// Act
+		Optional<Product> result = repository.findById(existingId);
+
+		// Assert
+		Assertions.assertTrue(result.isPresent());
+	}
+
+	@Test
+	public void findByIdShouldReturnEmptyOptionalWhenIdDoesNotExist() {
+		// Arrange
+
+		// Act
+		Optional<Product> result = repository.findById(nonExistentId);
+
+		// Assert
+		Assertions.assertFalse(result.isPresent());
 	}
 }
