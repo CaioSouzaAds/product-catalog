@@ -3,12 +3,12 @@ package com.projects.productscatalog.repositories;
 import java.util.Optional;
 
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 
 import com.projects.productscatalog.entities.Product;
-import com.projects.productscatalog.services.exceptions.ResourceNotFoundException;
 
 @DataJpaTest
 public class ProductRepositoryTests {
@@ -16,10 +16,18 @@ public class ProductRepositoryTests {
 	@Autowired
 	private ProductRepository repository;
 
+	private long existingId;
+	private long nonExistentId;
+
+	@BeforeEach
+	void setUp() throws Exception {
+		existingId = 1L;
+		nonExistentId = 1000L;
+	}
+
 	@Test
 	public void deleteShouldDeleteObjectWhenIdExists() {
 		// Arrange: Configuração do teste
-		long existingId = 1L;
 
 		// Act: Ação a ser testada
 		// Exclui o objeto com o ID existente usando o método deleteById do repositório
@@ -35,15 +43,14 @@ public class ProductRepositoryTests {
 
 	@Test
 	public void shouldReturnFalseWhenCheckingExistenceOfNonExistentId() {
-	    // Arrange
-	    long nonExistentId = 1000L;
-	    boolean expectedIdExists = false;
+		// Arrange
 
-	    // Act
-	    boolean actualIdExists = repository.existsById(nonExistentId);
+		boolean expectedIdExists = false;
 
-	    // Assert
-	    Assertions.assertEquals(expectedIdExists, actualIdExists);
+		// Act
+		boolean actualIdExists = repository.existsById(nonExistentId);
+
+		// Assert
+		Assertions.assertEquals(expectedIdExists, actualIdExists);
 	}
-
 }
