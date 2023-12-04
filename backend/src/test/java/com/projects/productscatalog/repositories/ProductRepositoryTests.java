@@ -9,6 +9,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 
 import com.projects.productscatalog.entities.Product;
+import com.projects.productscatalog.tests.Factory;
 
 @DataJpaTest
 public class ProductRepositoryTests {
@@ -18,11 +19,25 @@ public class ProductRepositoryTests {
 
 	private long existingId;
 	private long nonExistentId;
+	private long countTotalProducts;
 
 	@BeforeEach
 	void setUp() throws Exception {
 		existingId = 1L;
 		nonExistentId = 1000L;
+		countTotalProducts = 25L;
+	}
+	
+	@Test
+	public void saveShouldPersistWithAutoincrementWhenIdIsNull() {
+		
+		Product product = Factory.createdProduct();
+		product.setId(null);
+		
+		product = repository.save(product);
+		
+		Assertions.assertNotNull(product.getId());
+		Assertions.assertEquals(countTotalProducts + 1, product.getId());
 	}
 
 	@Test
