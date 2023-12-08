@@ -67,21 +67,20 @@ public class ProductService {
 
 	@Transactional
 	public void delete(Long id) {
-		
+
 		if (repository.existsById(id)) {
 			try {
-				repository.deleteById(id);
 
+				repository.deleteById(id);
 			} catch (DataIntegrityViolationException e) {
-				// Capturando exceção relacionada à violação de integridade
+				System.out.println("Integrity violation during delete");
 				throw new DataBaseException("Integrity violation");
 			}
-		}else {
+		} else {
+
 			throw new ResourceNotFoundException("Id not found " + id);
 		}
-			
-		
-		
+
 	}
 
 	private void copyDtoToEntity(ProductDTO dto, Product entity) {
