@@ -42,6 +42,19 @@ public class ProductServiceTests {
 		// com nonExistingId
 		Mockito.when(repository.existsById(nonExistingId)).thenThrow(ResourceNotFoundException.class);
 	}
+	
+	@Test
+	public void deleteShouldThrowResourceNotFoundExceptionWhenIdDoesNotExists() {
+
+		// Executa o método delete e verifica se não lança exceções
+		Assertions.assertThrows(ResourceNotFoundException.class, () -> {
+			service.delete(nonExistingId);
+		});
+
+		// Verifica se o método deleteById do mock repository foi chamado exatamente uma
+		// vez com o ID existente
+		Mockito.verify(repository, Mockito.times(1)).existsById(nonExistingId);
+	}
 
 	// Teste para verificar se o método delete funciona corretamente quando chamado
 	// com um ID existente
