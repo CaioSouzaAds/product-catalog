@@ -72,8 +72,8 @@ public class ProductService {
 			try {
 
 				repository.deleteById(id);
+
 			} catch (DataIntegrityViolationException e) {
-				System.out.println("Integrity violation during delete");
 				throw new DataBaseException("Integrity violation");
 			}
 		} else {

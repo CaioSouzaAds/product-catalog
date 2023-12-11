@@ -7,9 +7,11 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import com.projects.productscatalog.repositories.ProductRepository;
+import com.projects.productscatalog.services.exceptions.DataBaseException;
 import com.projects.productscatalog.services.exceptions.ResourceNotFoundException;
 
 //Importa as anotações e classes necessárias para os testes com Spring e Mockito
@@ -27,6 +29,7 @@ public class ProductServiceTests {
 	// Variáveis para armazenar IDs existentes e não existentes
 	private long existingId;
 	private long nonExistingId;
+	private long dependentId;
 
 	// Método executado antes de cada teste para configurar o ambiente
 	@BeforeEach
@@ -34,6 +37,7 @@ public class ProductServiceTests {
 		// Define IDs para teste
 		existingId = 1L;
 		nonExistingId = 1000L;
+		dependentId = 4L;
 
 		// Configuração do mock para retornar true para existsById com existingId
 		Mockito.when(repository.existsById(existingId)).thenReturn(true);
@@ -41,8 +45,28 @@ public class ProductServiceTests {
 		// Configuração do mock para lançar ResourceNotFoundException para existsById
 		// com nonExistingId
 		Mockito.when(repository.existsById(nonExistingId)).thenThrow(ResourceNotFoundException.class);
+
+		// Configura o mock para lançar DataIntegrityViolationException para deleteById
+		Mockito.doThrow(DataIntegrityViolationException.class).when(repository).deleteById(dependentId);
+
 	}
-	
+
+	@Test
+	public void deleteShouldThrowDataBaseExceptionWhenDataIntegrityViolationExceptionIsThrown() {
+		// Configura o mock para retornar true para existsById com dependentId
+		Mockito.when(repository.existsById(dependentId)).thenReturn(true);
+
+		// Executa o método delete e verifica se lança a exceção esperada
+		Assertions.assertThrows(DataBaseException.class, () -> {
+			service.delete(dependentId);
+		});
+
+		// Verifica se o método deleteById do mock repository foi chamado exatamente uma
+		// vez com o ID existente
+		Mockito.verify(repository, Mockito.times(1)).deleteById(dependentId);
+
+	}
+
 	@Test
 	public void deleteShouldThrowResourceNotFoundExceptionWhenIdDoesNotExists() {
 
