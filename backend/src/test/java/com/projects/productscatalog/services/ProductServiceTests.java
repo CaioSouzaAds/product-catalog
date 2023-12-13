@@ -19,11 +19,15 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import com.projects.productscatalog.dto.ProductDTO;
+import com.projects.productscatalog.entities.Category;
 import com.projects.productscatalog.entities.Product;
+import com.projects.productscatalog.repositories.CategoryRepository;
 import com.projects.productscatalog.repositories.ProductRepository;
 import com.projects.productscatalog.services.exceptions.DataBaseException;
 import com.projects.productscatalog.services.exceptions.ResourceNotFoundException;
 import com.projects.productscatalog.tests.Factory;
+
+import jakarta.persistence.EntityNotFoundException;
 
 //Importa as anotações e classes necessárias para os testes com Spring e Mockito
 @ExtendWith(SpringExtension.class)
@@ -37,20 +41,25 @@ public class ProductServiceTests {
 	@Mock
 	private ProductRepository repository;
 
+	@Mock
+	private CategoryRepository categoryRepository;
+
 	// Variáveis para armazenar IDs existentes e não existentes
 	private long existingId;
 	private long nonExistingId;
 	private long dependentId;
 	private PageImpl<Product> page;
 	private Product product;
+	private Category category;
 
 	// Método executado antes de cada teste para configurar o ambiente
 	@BeforeEach
 	void setUp() throws Exception {
 		// Define IDs para teste
-		existingId = 1L;
-		nonExistingId = 2L;
-		dependentId = 3L;
+		existingId = 2L;
+		nonExistingId = 3L;
+		dependentId = 4L;
+		category = Factory.createdCategory();
 		product = Factory.createdProduct();
 		page = new PageImpl<>(List.of(product));
 
@@ -59,18 +68,66 @@ public class ProductServiceTests {
 		Mockito.when(repository.save(ArgumentMatchers.any())).thenReturn(product);
 
 		Mockito.when(repository.findById(existingId)).thenReturn(Optional.of(product));
-
 		Mockito.when(repository.findById(nonExistingId)).thenReturn(Optional.empty());
 
-		// Configuração do mock para retornar true para existsById com existingId
-		Mockito.when(repository.existsById(existingId)).thenReturn(true);
+		Mockito.when(repository.getReferenceById(existingId)).thenReturn(product);
+		Mockito.when(repository.getReferenceById(nonExistingId)).thenThrow(EntityNotFoundException.class);
 
-		// Configuração do mock para lançar ResourceNotFoundException para existsById
-		// com nonExistingId
+		Mockito.when(categoryRepository.getReferenceById(existingId)).thenReturn(category);
+		Mockito.when(categoryRepository.getReferenceById(nonExistingId)).thenThrow(EntityNotFoundException.class);
+
+		Mockito.when(repository.existsById(existingId)).thenReturn(true);
 		Mockito.when(repository.existsById(nonExistingId)).thenThrow(ResourceNotFoundException.class);
 
 		// Configura o mock para lançar DataIntegrityViolationException para deleteById
 		Mockito.doThrow(DataIntegrityViolationException.class).when(repository).deleteById(dependentId);
+
+	}
+
+	@Test
+	public void updateShouldReturnUpdatedProductDTOWhenIdExists() {
+
+		ProductDTO productDTO = Factory.createProductDTO();
+
+		ProductDTO result = service.update(existingId, productDTO);
+
+		Assertions.assertNotNull(result);
+
+		Mockito.verify(repository, Mockito.times(1)).getReferenceById(existingId);
+
+	}
+
+	@Test
+	public void updateShouldThrowEntityNotFoundExceptionForNonExistingProduct() {
+
+		ProductDTO productDTO = Factory.createProductDTO();
+
+		Assertions.assertThrows(ResourceNotFoundException.class, () -> {
+			service.update(nonExistingId, productDTO);
+		});
+
+		Mockito.verify(repository, Mockito.times(1)).getReferenceById(nonExistingId);
+	}
+
+	@Test
+	public void findByIdShouldReturnProductDTOWhenIdExists() {
+
+		ProductDTO result = service.findById(existingId);
+
+		Assertions.assertNotNull(result);
+
+		Mockito.verify(repository, Mockito.times(1)).findById(existingId);
+
+	}
+
+	@Test
+	public void findByIdShouldThrowResourceNotFoundExceptionWhenIdDoesNotExist() {
+
+		Assertions.assertThrows(ResourceNotFoundException.class, () -> {
+			service.findById(nonExistingId);
+		});
+
+		Mockito.verify(repository, Mockito.times(1)).findById(nonExistingId);
 
 	}
 
