@@ -1,18 +1,29 @@
 package com.projects.productscatalog.services;
 
+import java.util.List;
+import java.util.Optional;
+
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentMatchers;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
+import com.projects.productscatalog.dto.ProductDTO;
+import com.projects.productscatalog.entities.Product;
 import com.projects.productscatalog.repositories.ProductRepository;
 import com.projects.productscatalog.services.exceptions.DataBaseException;
 import com.projects.productscatalog.services.exceptions.ResourceNotFoundException;
+import com.projects.productscatalog.tests.Factory;
 
 //Importa as anotações e classes necessárias para os testes com Spring e Mockito
 @ExtendWith(SpringExtension.class)
@@ -30,14 +41,26 @@ public class ProductServiceTests {
 	private long existingId;
 	private long nonExistingId;
 	private long dependentId;
+	private PageImpl<Product> page;
+	private Product product;
 
 	// Método executado antes de cada teste para configurar o ambiente
 	@BeforeEach
 	void setUp() throws Exception {
 		// Define IDs para teste
 		existingId = 1L;
-		nonExistingId = 1000L;
-		dependentId = 4L;
+		nonExistingId = 2L;
+		dependentId = 3L;
+		product = Factory.createdProduct();
+		page = new PageImpl<>(List.of(product));
+
+		Mockito.when(repository.findAll((Pageable) ArgumentMatchers.any())).thenReturn(page);
+
+		Mockito.when(repository.save(ArgumentMatchers.any())).thenReturn(product);
+
+		Mockito.when(repository.findById(existingId)).thenReturn(Optional.of(product));
+
+		Mockito.when(repository.findById(nonExistingId)).thenReturn(Optional.empty());
 
 		// Configuração do mock para retornar true para existsById com existingId
 		Mockito.when(repository.existsById(existingId)).thenReturn(true);
@@ -48,6 +71,18 @@ public class ProductServiceTests {
 
 		// Configura o mock para lançar DataIntegrityViolationException para deleteById
 		Mockito.doThrow(DataIntegrityViolationException.class).when(repository).deleteById(dependentId);
+
+	}
+
+	@Test
+	public void findAllPagedShouldReturnPage() {
+
+		Pageable pageable = PageRequest.of(0, 10);
+
+		Page<ProductDTO> result = service.findAllPaged(pageable);
+
+		Assertions.assertNotNull(result);
+		Mockito.verify(repository, Mockito.times(1)).findAll(pageable);
 
 	}
 
