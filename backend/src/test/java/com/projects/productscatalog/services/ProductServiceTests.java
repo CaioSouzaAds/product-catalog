@@ -80,6 +80,7 @@ public class ProductServiceTests {
 		Mockito.when(repository.existsById(nonExistingId)).thenThrow(ResourceNotFoundException.class);
 
 		// Configura o mock para lançar DataIntegrityViolationException para deleteById
+		// Configura o mock para lançar DataIntegrityViolationException para deleteById
 		Mockito.doThrow(DataIntegrityViolationException.class).when(repository).deleteById(dependentId);
 
 	}
