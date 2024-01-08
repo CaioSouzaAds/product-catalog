@@ -1,8 +1,9 @@
 package com.projects.productscatalog.services;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+
+import java.util.List;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -11,13 +12,15 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
-import org.springframework.http.ResponseEntity;
+import org.springframework.data.domain.Sort;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.projects.productscatalog.dto.ProductDTO;
 import com.projects.productscatalog.repositories.ProductRepository;
 import com.projects.productscatalog.services.exceptions.ResourceNotFoundException;
 
 @SpringBootTest
+@Transactional
 public class ProductServiceIT {
     
     @Autowired
@@ -48,6 +51,37 @@ public class ProductServiceIT {
         Assertions.assertEquals(0, page.getNumber());
         Assertions.assertEquals(10, page.getSize());
     
+    }
+    
+    
+    @Test
+    public void findAllShouldReturnSortedPageWhenSortByName() {
+        PageRequest pageRequest = PageRequest.of(0, 10, Sort.by("name"));
+
+        Page<ProductDTO> page = service.findAllPaged(pageRequest);
+
+        Assertions.assertFalse(page.isEmpty());
+        Assertions.assertEquals(0, page.getNumber());
+        Assertions.assertEquals(10, page.getSize());
+
+        // Verifique se os produtos estão ordenados pelo nome
+        List<ProductDTO> products = page.getContent();
+        for (int i = 0; i < products.size() - 1; i++) {
+            String currentName = products.get(i).getName();
+            String nextName = products.get(i + 1).getName();
+            Assertions.assertTrue(currentName.compareTo(nextName) <= 0);
+        }
+    }
+    
+    @Test
+    public void findAllShouldReturnEmptyPageWhenPageDoesNotExist() {
+    	
+        PageRequest pageRequest = PageRequest.of(50, 10);
+
+        Page<ProductDTO> page = service.findAllPaged(pageRequest);
+
+        Assertions.assertTrue(page.isEmpty());
+        
     }
     
     @Test
